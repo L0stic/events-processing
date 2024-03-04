@@ -1,0 +1,118 @@
+plugins {
+	id 'java'
+	id 'eclipse'
+	id 'org.springframework.boot' version '3.1.4'
+	id 'pl.allegro.tech.build.axion-release' version '1.15.1'
+	id 'io.spring.dependency-management' version '1.1.3'
+}
+
+scmVersion {
+	tag {
+		initialVersion({config, gitInfo -> "0.0.1".toString()})
+	}
+	versionCreator('versionWithCommitHash')
+}
+
+group = 'com.rivada'
+version = scmVersion.version
+
+java {
+	sourceCompatibility = '17'
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenLocal()
+	mavenCentral()
+}
+
+ext {
+	awsVersion = "2.20.25"
+	mapstructVersion = "1.5.5.Final"
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
+	implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.postgresql:r2dbc-postgresql'
+
+	implementation 'org.flywaydb:flyway-core'
+	implementation 'org.springframework:spring-jdbc'
+
+	implementation 'org.web3j:core:4.10.3'
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+	implementation 'de.siegmar:logback-gelf:4.0.2'
+	implementation "org.mapstruct:mapstruct:${mapstructVersion}"
+
+	implementation "software.amazon.awssdk:sqs:${awsVersion}"
+	implementation "software.amazon.awssdk:secretsmanager:${awsVersion}"
+
+	compileOnly 'io.projectreactor:reactor-tools'
+	compileOnly 'org.projectlombok:lombok'
+
+	runtimeOnly 'org.postgresql:postgresql'
+
+	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+	annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+	annotationProcessor "org.projectlombok:lombok-mapstruct-binding:0.2.0"
+	annotationProcessor 'org.projectlombok:lombok'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'io.projectreactor:reactor-test'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+
+springBoot {
+	buildInfo {
+		properties {
+			additional = [
+					'git.branch': scmVersion.scmPosition.branch,
+					'git.commit': scmVersion.scmPosition.revision,
+			]
+		}
+	}
+}
+
+springBoot {
+	mainClass = 'com.rivada.events.ChainEventProcessingApplication'
+}
+
+bootJar {
+	archiveBaseName = 'chain-events-processing'
+}
+
+eclipse {
+	classpath {
+		// see https://docs.gradle.org/current/dsl/org.gradle.plugins.ide.eclipse.model.EclipseClasspath.html
+		downloadSources = true
+		downloadJavadoc = true
+	}
+}
+
+/* handle non existing source folders*/
+def eclipseSourceFolders=[
+		'src/main/java',
+		'src/main/resources',
+		'src/test/java',
+		'src/test/resources'
+];
+tasks.eclipse.dependsOn << {
+	for (String sourceFolder: eclipseSourceFolders){
+		def resourceDir = new File(project.projectDir, sourceFolder)
+		/* try to create folder when not existing */
+		if( !resourceDir.exists() && ! resourceDir.mkdirs() ) {
+			logger.info("Not able to create %1",resourceDir);
+		}
+	}
+}

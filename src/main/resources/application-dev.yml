@@ -1,0 +1,34 @@
+config:
+  database:
+    host: localhost
+    port: 5432
+    database: events_database
+    driver: postgresql
+    username: mad_user
+    password: mad_pwd
+  events:
+    region: 'eu-central-1'
+    eventQueueName: chain-events-dev
+  chain:
+    networkEnvironmentType: testnet
+    chainId: 80001
+    rpcUrl: https://polygon-mumbai-bor.publicnode.com
+    wssUri: wss://polygon-mumbai-bor.publicnode.com
+    gasTokenSymbol: 'MATIC'
+    gasTokenDecimals: 18
+  chain-wallet:
+    mainWalletPrivateKey: '636fc3099b811c3b3200130972583062bd41c74b0f103e48ac7db5ccbc'
+  contracts:
+    coreContractAddress: '0xE6146F3066c680b8D1e5fD1ad3E912FBAcd499Ac'
+    capTokenAddress: '0xC18F86eBD01feD68B2EA33F2e5C95eD54572c4A7'
+    capTokenSymbol: 'teCAPs'
+  eventsDefragmentation:
+    first:
+      delayMin: 110
+      timeoutMin: 600
+      eventsAgeScopeHours: 240
+    second:
+      delayMin: 40
+      timeoutMin: 130
+      eventsAgeScopeHours: 4
+    blocksCountPerSecondEstimate: 2

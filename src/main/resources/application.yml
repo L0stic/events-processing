@@ -1,0 +1,61 @@
+server:
+  port: 5002
+  servlet:
+    context-path: /
+  error:
+    whitelabel:
+      enabled: false
+    include-stacktrace: never
+
+spring:
+  application:
+    name: Blockchain Events Processing
+  #   ==== JPA / HIBERNATE ====
+  r2dbc:
+    pool:
+      enabled: true
+      initial-size: 5
+      max-idle-time: 20s
+      max-life-time: 60s
+      max-acquire-time: 60s
+      max-size: 200
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+
+springdoc:
+  swagger-ui:
+    path: /gui
+
+config:
+  accessibilityCheck:
+    timeoutSec: 30
+    criticalTimeoutSec: 180
+  secrets:
+    db: dev/chain-events/db
+    events-queue: dev/chain-events-queue-config
+    chain-wallet: dev/chain-events/chain-wallet-data
+    chain-data: dev/chain-data
+    contracts: dev/contract-data
+    defragmentation: dev/chain-events/defragmentation-config
+  aws:
+    region: 'eu-central-1'
+    sqs:
+      enabled: true
+
+#LOGGING CONFIG
+debug-spring: false
+debug: ${debug-spring} #do not change prop directly
+
+logging:
+  app-name: Chain-Events-Processing
+  console-level: 'TRACE'
+  file:
+    level: 'OFF'
+    path: ./logs
+  level:
+    trade: INFO
+  greylog:
+    level: 'OFF'
+    host: localhost
+    port: 12201

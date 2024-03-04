@@ -1,0 +1,93 @@
+<configuration debug="true">
+    <springProperty scope="context" name="appName" source="logging.app-name"/>
+    <springProperty scope="context" name="greyloglevel" source="logging.greylog.level" defaultValue="TRACE"/>
+    <springProperty scope="context" name="greyloghost" source="logging.greylog.host" defaultValue="localhost"/>
+    <springProperty scope="context" name="greylogport" source="logging.greylog.port" defaultValue="12201"/>
+    <springProperty scope="context" name="consolelevel" source="logging.console-level" defaultValue="DEBUG"/>
+    <springProperty scope="context" name="filepath" source="logging.file.path" defaultValue="./logs"/>
+    <springProperty scope="context" name="filelevel" source="logging.file.level" defaultValue="DEBUG"/>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>${consolelevel}</level>
+        </filter>
+        <encoder>
+            <pattern>
+                %green(%date{dd-MM-yyy HH:mm:ss.SSS}) %highlight(%-5level) %yellow([%c{}:%line]) : %white(%msg%n)
+            </pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="FILE-ROLLING" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>${filelevel}</level>
+        </filter>
+        <file>${filepath}/${appName}.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${filepath}/archived/${appName}-%d{dd-MM-yyyy}.%i.log</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>20MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <!-- keep 30 days' worth of history -->
+            <maxHistory>30</maxHistory>
+            <!-- up to 5 GB max -->
+            <totalSizeCap>2GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%date  %-5level [%c{}:%line] : %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="GELF" class="de.siegmar.logbackgelf.GelfUdpAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>${greyloglevel}</level>
+        </filter>
+        <graylogHost>${greyloghost}</graylogHost>
+        <graylogPort>${greylogport}</graylogPort>
+        <maxChunkSize>508</maxChunkSize>
+        <useCompression>true</useCompression>
+        <messageIdSupplier class="de.siegmar.logbackgelf.MessageIdSupplier"/>
+        <encoder class="de.siegmar.logbackgelf.GelfEncoder">
+            <originHost>${greyloghost}</originHost>
+            <includeRawMessage>false</includeRawMessage>
+            <includeMarker>true</includeMarker>
+            <includeMdcData>true</includeMdcData>
+            <includeCallerData>true</includeCallerData>
+            <includeRootCauseData>true</includeRootCauseData>
+            <includeLevelName>true</includeLevelName>
+            <shortPatternLayout class="ch.qos.logback.classic.PatternLayout">
+                <pattern>%m%nopex</pattern>
+            </shortPatternLayout>
+            <fullPatternLayout class="ch.qos.logback.classic.PatternLayout">
+                <pattern>%m%n</pattern>
+            </fullPatternLayout>
+            <staticField>application:${appName}</staticField>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="GELF"/>
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE-ROLLING"/>
+    </root>
+
+    <logger name="org.springframework" additivity="false" level="WARN">
+        <appender-ref ref="GELF"/>
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE-ROLLING"/>
+    </logger>
+
+    <logger name="org.web3j" additivity="false" level="INFO">
+        <appender-ref ref="GELF"/>
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE-ROLLING"/>
+    </logger>
+
+    <logger name="com.rivada" additivity="false" level="TRACE">
+        <appender-ref ref="GELF"/>
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE-ROLLING"/>
+    </logger>
+</configuration>
+
